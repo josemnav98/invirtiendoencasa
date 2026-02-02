@@ -1,131 +1,79 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis datos Golf | Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&display=swap');
-        body { font-family: 'Geist', sans-serif; opacity: 0; animation: fadeIn 0.6s forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .active-tab { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: 700; }
-        .tour-card { transition: all 0.2s ease; border-left: 4px solid transparent; }
-        .tour-card:hover { border-left-color: #6366f1; transform: translateX(4px); }
-    </style>
-</head>
-<body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+<script>
+    const API_KEY = 'e72e887fcbmsh533532df62ebd23p15b710jsnecfeebbc7925';
+    // PRUEBA CON ESTE FORMATO DE URL SI EL ANTERIOR FALLA
+    const DRIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/1gndtK_orjzYzqxWPlcIId_xrmyomAMka/gviz/tq?tqx=out:csv';
 
-    <div class="max-w-2xl mx-auto px-6 py-12">
-        <header class="text-center mb-12">
-            <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                Mis datos <span class="text-indigo-600 font-light">Golf</span>
-            </h1>
-        </header>
-
-        <nav class="flex justify-between border-b border-slate-200 mb-8 text-[9px] tracking-[0.2em] uppercase font-bold">
-            <button onclick="switchTab(event, 'pga')" class="tab-link pb-3 active-tab flex-1 text-center">PGA</button>
-            <button onclick="switchTab(event, 'dpw')" class="tab-link pb-3 text-slate-400 flex-1 text-center">DP World</button>
-            <button onclick="switchTab(event, 'owgr')" class="tab-link pb-3 text-slate-400 flex-1 text-center">World Rank</button>
-        </nav>
-
-        <main>
-            <div id="pga" class="tab-content active space-y-4">
-                <div id="pga-list" class="space-y-3">
-                    <div class="py-12 text-center text-slate-300"><i data-lucide="refresh-cw" class="w-6 h-6 animate-spin mx-auto"></i></div>
-                </div>
-            </div>
-
-            <div id="dpw" class="tab-content space-y-4">
-                <div id="dpw-list" class="space-y-3">
-                    <div class="py-12 text-center text-slate-300"><i data-lucide="refresh-cw" class="w-6 h-6 animate-spin mx-auto"></i></div>
-                </div>
-            </div>
-
-            <div id="owgr" class="tab-content">
-                <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 text-[10px] text-slate-400 uppercase tracking-widest">
-                            <tr>
-                                <th class="px-6 py-4 font-medium">Rank</th>
-                                <th class="py-4 font-medium">Jugador</th>
-                                <th class="px-6 py-4 font-medium text-right">Avg Pts</th>
-                            </tr>
-                        </thead>
-                        <tbody id="owgr-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                    </table>
-                    <div id="empty-state" class="py-12 text-center text-slate-300 text-xs italic">Sincronizando datos...</div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        const API_KEY = 'e72e887fcbmsh533532df62ebd23p15b710jsnecfeebbc7925';
-        const DRIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/1gndtK_orjzYzqxWPlcIId_xrmyomAMka/export?format=csv';
-
-        async function fetchOWGR() {
-            try {
-                const response = await fetch(DRIVE_CSV_URL);
-                const text = await response.text();
-                const rows = text.split('\n').map(row => row.split(','));
-                let html = '';
-                for (let i = 1; i <= 10; i++) {
-                    const row = rows[i];
-                    if (row && row.length >= 5) {
-                        html += `
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-bold text-slate-400">${row[0].replace(/"/g, '')}</td>
-                                <td class="py-4 font-semibold text-slate-900">${row[4].replace(/"/g, '')}</td>
-                                <td class="px-6 py-4 text-right font-mono text-indigo-600 text-xs">${row[5].replace(/"/g, '')}</td>
-                            </tr>`;
-                    }
+    async function fetchOWGR() {
+        const tbody = document.getElementById('owgr-table-body');
+        const emptyState = document.getElementById('empty-state');
+        try {
+            const response = await fetch(DRIVE_CSV_URL);
+            if (!response.ok) throw new Error('Error en Drive');
+            const text = await response.text();
+            const rows = text.split('\n').map(row => row.split(','));
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                const row = rows[i];
+                if (row && row.length >= 5) {
+                    html += `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-bold text-slate-400">${row[0].replace(/"/g, '')}</td>
+                            <td class="py-4 font-semibold text-slate-900">${row[4].replace(/"/g, '')}</td>
+                            <td class="px-6 py-4 text-right font-mono text-indigo-600 text-xs">${row[5].replace(/"/g, '')}</td>
+                        </tr>`;
                 }
-                document.getElementById('owgr-table-body').innerHTML = html;
-                document.getElementById('empty-state').style.display = 'none';
-            } catch (error) { console.error(error); }
+            }
+            tbody.innerHTML = html;
+            emptyState.style.display = 'none';
+        } catch (error) {
+            emptyState.innerText = "Error: Verifica que el archivo de Drive sea público.";
         }
+    }
 
-        async function fetchTour(orgId, containerId) {
-            const list = document.getElementById(containerId);
-            try {
-                const res = await fetch(`https://live-golf-data.p.rapidapi.com/schedule?orgId=${orgId}&year=2024`, {
-                    headers: { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'live-golf-data.p.rapidapi.com' }
-                });
-                const data = await res.json();
-                list.innerHTML = data.slice(0, 6).map(ev => `
-                    <div class="tour-card bg-white border border-slate-200 p-5 rounded-2xl flex justify-between items-center shadow-sm">
-                        <div>
-                            <span class="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">${new Date(ev.startDate).toLocaleDateString('es-ES', {month: 'short', day: 'numeric'})}</span>
-                            <h4 class="text-sm font-bold text-slate-800 leading-tight mt-1">${ev.tournamentName}</h4>
-                            <p class="text-[10px] text-slate-400 mt-1">${ev.city || 'Sede TBD'}</p>
-                        </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-200"></i>
-                    </div>
-                `).join('');
-            } catch (e) { list.innerHTML = '<p class="text-center text-xs text-slate-300 py-10">Error de conexión.</p>'; }
-            lucide.createIcons();
-        }
-
-        function switchTab(evt, tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-link').forEach(l => {
-                l.classList.remove('active-tab'); l.classList.add('text-slate-400');
+    async function fetchTour(orgId, containerId) {
+        const list = document.getElementById(containerId);
+        // ACTUALIZADO A 2026
+        const currentYear = new Date().getFullYear(); 
+        try {
+            const res = await fetch(`https://live-golf-data.p.rapidapi.com/schedule?orgId=${orgId}&year=${currentYear}`, {
+                headers: { 
+                    'x-rapidapi-key': API_KEY, 
+                    'x-rapidapi-host': 'live-golf-data.p.rapidapi.com' 
+                }
             });
-            document.getElementById(tabName).classList.add('active');
-            evt.currentTarget.classList.add('active-tab');
-            evt.currentTarget.classList.remove('text-slate-400');
+            const data = await res.json();
+            if (!Array.isArray(data)) throw new Error();
+            
+            list.innerHTML = data.slice(0, 6).map(ev => `
+                <div class="tour-card bg-white border border-slate-200 p-5 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div>
+                        <span class="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">${new Date(ev.startDate).toLocaleDateString('es-ES', {month: 'short', day: 'numeric'})}</span>
+                        <h4 class="text-sm font-bold text-slate-800 leading-tight mt-1">${ev.tournamentName}</h4>
+                        <p class="text-[10px] text-slate-400 mt-1">${ev.city || 'Sede TBD'}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-200"></i>
+                </div>
+            `).join('');
+        } catch (e) { 
+            list.innerHTML = '<p class="text-center text-[10px] text-slate-400 py-10">Sin datos para ' + currentYear + ' o límite de API excedido.</p>'; 
         }
+        lucide.createIcons();
+    }
 
-        window.onload = () => {
-            fetchOWGR();
-            fetchTour(1, 'pga-list');
-            fetchTour(2, 'dpw-list');
-            lucide.createIcons();
-        };
-    </script>
-</body>
-</html>
+    function switchTab(evt, tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-link').forEach(l => {
+            l.classList.remove('active-tab'); l.classList.add('text-slate-400');
+        });
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.classList.add('active-tab');
+        evt.currentTarget.classList.remove('text-slate-400');
+    }
+
+    window.onload = () => {
+        fetchOWGR();
+        fetchTour(1, 'pga-list');
+        fetchTour(2, 'dpw-list');
+        lucide.createIcons();
+    };
+</script>
